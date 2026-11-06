@@ -504,6 +504,15 @@ $("classDay").value = todayNumber;
 updateApp();
 setInterval(updateApp, 1000);
 </script>
+  <script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js")
+      .then(() => console.log("ClassTime is ready!"))
+      .catch(error => console.log("Service worker error:", error));
+  });
+}
+</script>
 </body>
 </html>
 
