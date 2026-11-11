@@ -1,0 +1,1089 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClassTime</title>
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 20px 20px 105px;
+  background: #10131c;
+  color: white;
+  font-family: Arial, sans-serif;
+}
+
+.app {
+  max-width: 520px;
+  margin: 20px auto;
+}
+
+h1 { color: #a78bfa; }
+
+.page { display: none; }
+.page.active { display: block; }
+
+.bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+  background: #171c29;
+  border-top: 1px solid #343c50;
+  box-shadow: 0 -6px 20px rgba(0,0,0,.25);
+}
+
+.bottom-nav button {
+  width: 100%;
+  margin: 0;
+  padding: 8px 4px;
+  background: transparent;
+  color: #aab1c3;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.bottom-nav button .nav-icon {
+  font-size: 21px;
+  line-height: 1.2;
+}
+
+.bottom-nav button.active {
+  color: #a78bfa;
+  background: #29243c;
+}
+
+.bottom-nav button:focus-visible {
+  outline: 2px solid #a78bfa;
+  outline-offset: 2px;
+}
+
+.card {
+  background: #202535;
+  padding: 20px;
+  border-radius: 16px;
+  margin: 15px 0;
+}
+
+.muted { color: #aab1c3; }
+
+#clock {
+  font-size: 28px;
+}
+
+#countdown {
+  font-size: 40px;
+  font-weight: bold;
+  color: #a78bfa;
+}
+
+input, select, button {
+  width: 100%;
+  padding: 12px;
+  margin: 7px 0;
+  border-radius: 9px;
+  border: none;
+  font-size: 15px;
+}
+
+input, select {
+  background: #343c50;
+  color: white;
+}
+
+button {
+  background: #a78bfa;
+  color: #10131c;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button.secondary {
+  background: #41485a;
+  color: white;
+}
+
+button.small {
+  width: auto;
+  padding: 7px 10px;
+  margin: 4px;
+}
+
+.class {
+  padding: 12px 0;
+  border-bottom: 1px solid #41485a;
+}
+
+.class-actions {
+  display: flex;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.class-actions button {
+  width: auto;
+  flex: 1;
+}
+
+.status {
+  color: #a78bfa;
+  font-size: 14px;
+}
+
+label {
+  display: block;
+  margin-top: 10px;
+  color: #aab1c3;
+}
+
+
+/* Responsive layouts: phone first, with a compact wearable layout. */
+:root {
+  --bg: #10131c;
+  --surface: #202535;
+  --surface-2: #343c50;
+  --nav-bg: #171c29;
+  --border: #41485a;
+  --accent: #a78bfa;
+  --accent-soft: #29243c;
+  --text: #ffffff;
+  --muted: #aab1c3;
+  --button-text: #10131c;
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  padding-left: max(12px, env(safe-area-inset-left));
+  padding-right: max(12px, env(safe-area-inset-right));
+}
+h1, #countdown, .status { color: var(--accent); }
+.card { background: var(--surface); }
+.bottom-nav { background: var(--nav-bg); border-color: var(--border); }
+.bottom-nav button { color: var(--muted); }
+.muted { color: var(--muted); }
+.bottom-nav button.active { color: var(--accent); background: var(--accent-soft); }
+input, select { background: var(--surface-2); color: var(--text); }
+button:not(.secondary) { background: var(--accent); color: var(--button-text); }
+button:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.app { width: 100%; }
+.card { min-width: 0; overflow-wrap: anywhere; }
+#countdown {
+  font-size: clamp(2rem, 9vw, 2.5rem);
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+.theme-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+.theme-choice {
+  min-width: 0;
+  margin: 0;
+  padding: 10px 6px;
+  border: 2px solid transparent;
+  background: var(--surface-2);
+  color: var(--text);
+  border-radius: 12px;
+  font-size: 13px;
+}
+.theme-choice[aria-pressed="true"] { border-color: var(--accent); }
+.theme-dot {
+  display: block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  margin: 0 auto 6px;
+  border: 2px solid rgba(255,255,255,.35);
+}
+.upload-area {
+  border: 2px dashed var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  text-align: center;
+}
+.upload-area input { margin-top: 10px; }
+#scheduleImagePreview {
+  display: none;
+  width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+  border-radius: 10px;
+  margin-top: 12px;
+  background: var(--bg);
+}
+.import-row { padding: 10px 0; border-bottom: 1px solid var(--border); }
+.import-row label { margin-top: 6px; }
+.import-row input { margin: 3px 0; }
+.import-row .import-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.small-note { font-size: 12px; line-height: 1.45; color: var(--muted); }
+.day-presets { display: flex; flex-wrap: wrap; gap: 5px; margin: 7px 0 10px; }
+.day-presets button { width: auto; margin: 0; }
+.day-picker { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+.day-picker label { display: flex; align-items: center; gap: 8px; margin: 0; padding: 10px; min-height: 42px; border-radius: 10px; background: var(--surface-2); color: var(--text); }
+.day-picker input[type="checkbox"] { width: 18px; height: 18px; min-height: 18px; margin: 0; accent-color: var(--accent); flex: 0 0 auto; }
+@media (max-width: 420px) {
+  body { padding-top: 10px; padding-bottom: 88px; }
+  .app { margin: 8px auto; }
+  .card { padding: 14px; margin: 10px 0; border-radius: 14px; }
+  h1 { font-size: 1.55rem; margin: 8px 0; }
+  h2 { font-size: 1.15rem; }
+  input, select, button { font-size: 16px; min-height: 44px; }
+  .bottom-nav { padding: 7px 8px calc(7px + env(safe-area-inset-bottom)); }
+  .bottom-nav button { min-height: 48px; font-size: 11px; }
+  .bottom-nav button .nav-icon { font-size: 18px; }
+  .class-actions button { min-height: 40px; }
+}
+@media (max-width: 320px) {
+  body { padding-left: 7px; padding-right: 7px; padding-bottom: 78px; }
+  .card { padding: 10px; margin: 8px 0; }
+  .bottom-nav { gap: 2px; padding-left: 4px; padding-right: 4px; }
+  .bottom-nav button { padding: 6px 2px; font-size: 10px; }
+  .theme-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .class-actions { flex-wrap: wrap; }
+}
+@media (max-width: 260px) {
+  body { padding-left: 4px; padding-right: 4px; }
+  .bottom-nav button .nav-icon { font-size: 16px; }
+  #countdown { font-size: 1.65rem; }
+  .card { padding: 8px; }
+  .theme-options { grid-template-columns: 1fr 1fr; }
+}
+
+</style>
+  <link rel="manifest" href="manifest.json">
+</head>
+
+<body>
+<div class="app">
+
+  <section class="page active" id="homePage">
+    <h1>ClassTime</h1>
+    <p class="muted">Your school day, under control.</p>
+    <div class="card">
+      <p class="muted">CURRENT TIME</p>
+      <h2 id="clock">--:--:--</h2>
+      <p id="todayLabel" class="muted"></p>
+    </div>
+    <div class="card">
+      <p class="muted">YOUR NEXT CLASS</p>
+      <h2 id="nextClass">No upcoming class</h2>
+      <p id="room" class="muted"></p>
+      <p id="startTime"></p>
+      <p class="muted">TIME UNTIL CLASS</p>
+      <div id="countdown">--:--:--</div>
+      <p id="passing" class="status"></p>
+    </div>
+  </section>
+
+  <section class="page" id="schedulePage">
+    <h1>Schedule</h1>
+    <p class="muted">Manage your weekly classes.</p>
+    <div class="card">
+      <h3>Weekly Schedule</h3>
+      <label for="viewDay">Choose a day:</label>
+      <select id="viewDay">
+        <option value="1">Monday</option>
+        <option value="2">Tuesday</option>
+        <option value="3">Wednesday</option>
+        <option value="4">Thursday</option>
+        <option value="5">Friday</option>
+        <option value="6">Saturday</option>
+        <option value="0">Sunday</option>
+      </select>
+      <div id="schedule"></div>
+    </div>
+    <div class="card">
+      <h3>AI Schedule Import</h3>
+      <p class="muted">Choose a photo or an existing screenshot of your school schedule from your phone.</p>
+      <div class="upload-area">
+        <strong>Choose a schedule image</strong>
+        <input id="scheduleImage" type="file" accept="image/*,.png,.jpg,.jpeg,.webp">
+        <img id="scheduleImagePreview" alt="Preview of the selected schedule image">
+      </div>
+      <button id="readScheduleButton" type="button">Read Schedule</button>
+      <p id="aiImportStatus" class="status" aria-live="polite"></p>
+      <div id="importPreview" hidden>
+        <h4>Review detected classes</h4>
+        <p class="small-note">Days default to Monday–Friday when the schedule doesn't list them. Check the names and times before importing.</p>
+        <div id="importRows"></div>
+        <button id="importScheduleButton" type="button">Import Selected Classes</button>
+      </div>
+      <p class="small-note">Your image is read in this browser. Nothing is sent to Infinite Campus, and you should never enter your school login here.</p>
+    </div>
+    <div class="card">
+      <h3 id="formTitle">Add a Class</h3>
+      <label>Days this class meets:</label>
+      <div class="day-presets">
+        <button type="button" class="secondary small" data-days-preset="weekdays">Mon–Fri</button>
+        <button type="button" class="secondary small" data-days-preset="mwf">Mon/Wed/Fri</button>
+        <button type="button" class="secondary small" data-days-preset="tth">Tue/Thu</button>
+        <button type="button" class="secondary small" data-days-preset="all">Every day</button>
+        <button type="button" class="secondary small" data-days-preset="clear">Clear</button>
+      </div>
+      <div id="classDays" class="day-picker">
+        <label><input type="checkbox" value="1"> Monday</label>
+        <label><input type="checkbox" value="2"> Tuesday</label>
+        <label><input type="checkbox" value="3"> Wednesday</label>
+        <label><input type="checkbox" value="4"> Thursday</label>
+        <label><input type="checkbox" value="5"> Friday</label>
+        <label><input type="checkbox" value="6"> Saturday</label>
+        <label><input type="checkbox" value="0"> Sunday</label>
+      </div>
+      <label for="className">Class name:</label>
+      <input id="className" placeholder="Example: English">
+      <label for="classRoom">Classroom:</label>
+      <input id="classRoom" placeholder="Example: 204">
+      <label for="classStart">Starting time:</label>
+      <input type="time" id="classStart">
+      <label for="classEnd">Ending time:</label>
+      <input type="time" id="classEnd">
+      <button id="saveButton">Add Class</button>
+      <button id="cancelButton" class="secondary" hidden>Cancel Editing</button>
+      <p id="message" class="status"></p>
+    </div>
+  </section>
+
+  <section class="page" id="settingsPage">
+    <h1>Settings</h1>
+    <p class="muted">Set up how ClassTime works.</p>
+    <div class="card">
+      <h3>Color Theme</h3>
+      <p class="muted">Choose how ClassTime looks. Your choice is saved on this device.</p>
+      <div class="theme-options" id="themeOptions">
+        <button type="button" class="theme-choice" data-theme="purple" aria-pressed="true"><span class="theme-dot" style="background:#a78bfa"></span>Purple</button>
+        <button type="button" class="theme-choice" data-theme="blue" aria-pressed="false"><span class="theme-dot" style="background:#60a5fa"></span>Blue</button>
+        <button type="button" class="theme-choice" data-theme="green" aria-pressed="false"><span class="theme-dot" style="background:#4ade80"></span>Green</button>
+        <button type="button" class="theme-choice" data-theme="pink" aria-pressed="false"><span class="theme-dot" style="background:#fb7185"></span>Pink</button>
+        <button type="button" class="theme-choice" data-theme="orange" aria-pressed="false"><span class="theme-dot" style="background:#fbbf24"></span>Orange</button>
+        <button type="button" class="theme-choice" data-theme="light" aria-pressed="false"><span class="theme-dot" style="background:#f3f4f6;border-color:#9ca3af"></span>Light</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Reminders</h3>
+      <p class="muted">
+        Get browser notifications 5 minutes and 2 minutes
+        before your classes. Keep this page open.
+      </p>
+      <button id="notificationButton">Enable Notifications</button>
+      <p id="notificationStatus" class="status"></p>
+    </div>
+  </section>
+
+</div>
+
+<nav class="bottom-nav" aria-label="Main navigation">
+  <button class="active" type="button" data-page="homePage" aria-current="page">
+    <span class="nav-icon" aria-hidden="true">⌂</span><span>Home</span>
+  </button>
+  <button type="button" data-page="schedulePage">
+    <span class="nav-icon" aria-hidden="true">▦</span><span>Schedule</span>
+  </button>
+  <button type="button" data-page="settingsPage">
+    <span class="nav-icon" aria-hidden="true">⚙</span><span>Settings</span>
+  </button>
+</nav>
+
+<script>
+const days = [
+  "Sunday", "Monday", "Tuesday", "Wednesday",
+  "Thursday", "Friday", "Saturday"
+];
+
+let classes = [];
+
+try {
+  classes = JSON.parse(
+    localStorage.getItem("classTimeSchedule") || "[]"
+  );
+
+  if (!Array.isArray(classes)) classes = [];
+} catch {
+  classes = [];
+}
+
+// Convert older one-day entries into multi-day classes and combine exact duplicates.
+function normalizeSavedClasses(items) {
+  const merged = new Map();
+  items.forEach(c => {
+    const classDays = Array.isArray(c.days) ? c.days.map(Number) : [Number(c.day)];
+    const validDays = [...new Set(classDays.filter(d => Number.isInteger(d) && d >= 0 && d <= 6))];
+    const key = [c.name || "", c.room || "", c.start || "", c.end || ""]
+      .map(value => String(value).trim().toLowerCase()).join("|");
+    if (merged.has(key)) {
+      const existing = merged.get(key);
+      existing.days = [...new Set([...existing.days, ...validDays])];
+    } else {
+      merged.set(key, { ...c, id: c.id || (Date.now().toString() + Math.random().toString(16).slice(2)), days: validDays });
+    }
+  });
+  return [...merged.values()];
+}
+classes = normalizeSavedClasses(classes);
+
+let editingId = null;
+const firedReminders = new Set();
+
+const $ = id => document.getElementById(id);
+
+function saveClasses() {
+  localStorage.setItem(
+    "classTimeSchedule",
+    JSON.stringify(classes)
+  );
+}
+
+function dateForClass(c) {
+  const [h, m] = c.start.split(":").map(Number);
+  const date = new Date();
+  date.setHours(h, m, 0, 0);
+  return date;
+}
+
+function dateForEnd(c) {
+  const [h, m] = c.end.split(":").map(Number);
+  const date = new Date();
+  date.setHours(h, m, 0, 0);
+  return date;
+}
+
+function formatTime(time) {
+  const [h, m] = time.split(":").map(Number);
+  const d = new Date();
+  d.setHours(h, m, 0, 0);
+  return d.toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit"
+  });
+}
+
+function countdownText(total) {
+  const seconds = Math.max(0, Math.floor(total / 1000));
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+
+  return [h, m, s]
+    .map(n => String(n).padStart(2, "0"))
+    .join(":");
+}
+
+function getTodayClasses() {
+  const day = new Date().getDay();
+
+  return classes
+    .filter(c => (c.days || [Number(c.day)]).map(Number).includes(day))
+    .sort((a, b) => a.start.localeCompare(b.start));
+}
+
+function updateApp() {
+  const now = new Date();
+
+  $("clock").textContent = now.toLocaleTimeString();
+  $("todayLabel").textContent =
+    now.toLocaleDateString([], {
+      weekday: "long",
+      month: "long",
+      day: "numeric"
+    });
+
+  const today = getTodayClasses();
+
+  const next = today.find(c => dateForClass(c) > now);
+  const current = today.find(c =>
+    dateForClass(c) <= now && dateForEnd(c) > now
+  );
+
+  if (next) {
+    $("nextClass").textContent = next.name;
+    $("room").textContent = "Room: " + next.room;
+    $("startTime").textContent =
+      "Starts at " + formatTime(next.start);
+    $("countdown").textContent =
+      countdownText(dateForClass(next) - now);
+
+    if (current) {
+      $("passing").textContent =
+        "You have " +
+        countdownText(dateForClass(next) - now) +
+        " until your next class. Current: " + current.name;
+    } else {
+      $("passing").textContent = "";
+    }
+  } else {
+    $("nextClass").textContent =
+      current ? current.name + " (in progress)" :
+      "No upcoming classes!";
+    $("room").textContent =
+      current ? "Room: " + current.room : "";
+    $("startTime").textContent = "";
+    $("countdown").textContent =
+      current ? countdownText(dateForEnd(current) - now) :
+      "🎉";
+    $("passing").textContent =
+      current ? "Time remaining in this class" :
+      "Enjoy your free time!";
+  }
+
+  renderSchedule();
+  checkReminders(today, now);
+}
+
+function renderSchedule() {
+  const day = Number($("viewDay").value);
+
+  const list = classes
+    .filter(c => (c.days || [Number(c.day)]).map(Number).includes(day))
+    .sort((a, b) => a.start.localeCompare(b.start));
+
+  const container = $("schedule");
+  container.replaceChildren();
+
+  if (!list.length) {
+    const empty = document.createElement("p");
+    empty.className = "muted";
+    empty.textContent = "No classes added for this day yet.";
+    container.appendChild(empty);
+    return;
+  }
+
+  list.forEach(c => {
+    const item = document.createElement("div");
+    item.className = "class";
+
+    const title = document.createElement("strong");
+    title.textContent = c.name;
+
+    const details = document.createElement("p");
+    details.className = "muted";
+    const dayLabels = (c.days || [Number(c.day)])
+      .map(day => days[Number(day)].slice(0, 3)).join(", ");
+    details.textContent = dayLabels + " · " +
+      formatTime(c.start) + " – " + formatTime(c.end) +
+      " · Room " + c.room;
+
+    const actions = document.createElement("div");
+    actions.className = "class-actions";
+
+    const edit = document.createElement("button");
+    edit.className = "secondary";
+    edit.textContent = "Edit";
+    edit.addEventListener("click", () => editClass(c.id));
+
+    const remove = document.createElement("button");
+    remove.className = "secondary";
+    remove.textContent = "Delete";
+    remove.addEventListener("click", () => deleteClass(c.id));
+
+    actions.append(edit, remove);
+    item.append(title, details, actions);
+    container.appendChild(item);
+  });
+}
+
+function getSelectedDays() {
+  return [...document.querySelectorAll("#classDays input:checked")]
+    .map(input => Number(input.value));
+}
+
+function setSelectedDays(dayList) {
+  const selected = new Set((dayList || []).map(Number));
+  document.querySelectorAll("#classDays input").forEach(input => {
+    input.checked = selected.has(Number(input.value));
+  });
+}
+
+function addOrUpdateClass() {
+  const selectedDays = getSelectedDays();
+  const name = $("className").value.trim();
+  const room = $("classRoom").value.trim() || "Not entered";
+  const start = $("classStart").value;
+  const end = $("classEnd").value;
+
+  if (!selectedDays.length) {
+    $("message").textContent = "Choose at least one day for this class.";
+    return;
+  }
+  if (!name || !start || !end) {
+    $("message").textContent = "Please enter a class name, start time, and end time.";
+    return;
+  }
+  if (end <= start) {
+    $("message").textContent = "Ending time must be later than starting time.";
+    return;
+  }
+
+  const conflict = classes.some(c => {
+    const existingDays = (c.days || [Number(c.day)]).map(Number);
+    const sharesDay = existingDays.some(day => selectedDays.includes(day));
+    return c.id !== editingId && sharesDay && start < c.end && end > c.start;
+  });
+
+  if (conflict) {
+    $("message").textContent = "Those times overlap another class on one of the selected days.";
+    return;
+  }
+
+  if (editingId !== null) {
+    const old = classes.find(c => c.id === editingId);
+    if (old) {
+      Object.assign(old, { days: selectedDays, name, room, start, end });
+      delete old.day;
+    }
+  } else {
+    classes.push({
+      id: Date.now().toString() + Math.random().toString(16).slice(2),
+      days: selectedDays, name, room, start, end
+    });
+  }
+
+  saveClasses();
+  resetForm();
+  $("viewDay").value = String(selectedDays[0]);
+  updateApp();
+}
+
+function editClass(id) {
+  const c = classes.find(item => item.id === id);
+  if (!c) return;
+
+  editingId = id;
+  setSelectedDays(c.days || [Number(c.day)]);
+  $("className").value = c.name;
+  $("classRoom").value = c.room;
+  $("classStart").value = c.start;
+  $("classEnd").value = c.end;
+  $("formTitle").textContent = "Edit Class";
+  $("saveButton").textContent = "Save Changes";
+  $("cancelButton").hidden = false;
+  $("message").textContent = "Editing " + c.name;
+}
+
+function deleteClass(id) {
+  if (!confirm("Delete this class?")) return;
+
+  classes = classes.filter(c => c.id !== id);
+  saveClasses();
+
+  if (editingId === id) resetForm();
+
+  updateApp();
+}
+
+function resetForm() {
+  editingId = null;
+  $("className").value = "";
+  setSelectedDays([]);
+  $("classRoom").value = "";
+  $("classStart").value = "";
+  $("classEnd").value = "";
+  $("formTitle").textContent = "Add a Class";
+  $("saveButton").textContent = "Add Class";
+  $("cancelButton").hidden = true;
+  $("message").textContent = "";
+}
+
+function checkReminders(today, now) {
+  if (!("Notification" in window) ||
+      Notification.permission !== "granted") return;
+
+  today.forEach(c => {
+    const minutes = Math.ceil((dateForClass(c) - now) / 60000);
+
+    if (minutes === 5 || minutes === 2) {
+      const key = c.id + "-" + now.toDateString() + "-" + minutes;
+
+      if (firedReminders.has(key)) return;
+      firedReminders.add(key);
+
+      new Notification("ClassTime: " + c.name, {
+        body: "Your class starts in " + minutes +
+          " minutes. Room: " + c.room
+      });
+
+      if ("vibrate" in navigator) {
+        navigator.vibrate([200, 100, 200]);
+      }
+    }
+  });
+}
+
+// Bottom navigation: switch between Home, Schedule, and Settings.
+document.querySelectorAll(".bottom-nav button").forEach(button => {
+  button.addEventListener("click", () => {
+    const pageId = button.dataset.page;
+    document.querySelectorAll(".page").forEach(page => {
+      page.classList.toggle("active", page.id === pageId);
+    });
+    document.querySelectorAll(".bottom-nav button").forEach(navButton => {
+      const isActive = navButton === button;
+      navButton.classList.toggle("active", isActive);
+      if (isActive) navButton.setAttribute("aria-current", "page");
+      else navButton.removeAttribute("aria-current");
+    });
+    if (pageId === "schedulePage") renderSchedule();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+});
+
+$("saveButton").addEventListener("click", addOrUpdateClass);
+$("cancelButton").addEventListener("click", resetForm);
+$("viewDay").addEventListener("change", renderSchedule);
+
+document.querySelectorAll("[data-days-preset]").forEach(button => {
+  button.addEventListener("click", () => {
+    const presets = {
+      weekdays: [1, 2, 3, 4, 5],
+      mwf: [1, 3, 5],
+      tth: [2, 4],
+      all: [0, 1, 2, 3, 4, 5, 6],
+      clear: []
+    };
+    setSelectedDays(presets[button.dataset.daysPreset]);
+  });
+});
+
+$("notificationButton").addEventListener("click", async () => {
+  if (!("Notification" in window)) {
+    $("notificationStatus").textContent =
+      "Notifications are not supported by this browser.";
+    return;
+  }
+
+  const permission = await Notification.requestPermission();
+
+  $("notificationStatus").textContent =
+    permission === "granted"
+      ? "Notifications enabled! Keep this page open."
+      : "Notifications were not enabled.";
+});
+
+// Color themes. The selected theme is saved on this device.
+const themes = {
+  purple: { bg:"#10131c", surface:"#202535", surface2:"#343c50", nav:"#171c29", border:"#41485a", accent:"#a78bfa", soft:"#29243c", text:"#ffffff", muted:"#aab1c3", buttonText:"#10131c" },
+  blue:   { bg:"#101722", surface:"#1d2a3b", surface2:"#30445e", nav:"#172334", border:"#3c526e", accent:"#60a5fa", soft:"#203650", text:"#ffffff", muted:"#b4c5d8", buttonText:"#101722" },
+  green:  { bg:"#101a17", surface:"#20332b", surface2:"#344d41", nav:"#172720", border:"#405c4e", accent:"#4ade80", soft:"#1d3b2b", text:"#ffffff", muted:"#b4cbbd", buttonText:"#101a17" },
+  pink:   { bg:"#1b1219", surface:"#352330", surface2:"#503548", nav:"#271a24", border:"#624456", accent:"#fb7185", soft:"#482536", text:"#ffffff", muted:"#d4b8c3", buttonText:"#1b1219" },
+  orange: { bg:"#1b1711", surface:"#352b1d", surface2:"#51412b", nav:"#282015", border:"#655137", accent:"#fbbf24", soft:"#49351a", text:"#ffffff", muted:"#d4c4a5", buttonText:"#1b1711" },
+  light:  { bg:"#f3f4f6", surface:"#ffffff", surface2:"#e5e7eb", nav:"#ffffff", border:"#d1d5db", accent:"#6d28d9", soft:"#ede9fe", text:"#111827", muted:"#4b5563", buttonText:"#ffffff" }
+};
+
+function applyTheme(themeName) {
+  const theme = themes[themeName] || themes.purple;
+  const root = document.documentElement;
+  root.style.setProperty("--bg", theme.bg);
+  root.style.setProperty("--surface", theme.surface);
+  root.style.setProperty("--surface-2", theme.surface2);
+  root.style.setProperty("--nav-bg", theme.nav);
+  root.style.setProperty("--border", theme.border);
+  root.style.setProperty("--accent", theme.accent);
+  root.style.setProperty("--accent-soft", theme.soft);
+  root.style.setProperty("--text", theme.text);
+  root.style.setProperty("--muted", theme.muted);
+  root.style.setProperty("--button-text", theme.buttonText);
+  document.body.style.backgroundColor = theme.bg;
+  document.body.style.color = theme.text;
+  document.querySelectorAll(".theme-choice").forEach(button => {
+    button.setAttribute("aria-pressed", String(button.dataset.theme === themeName));
+  });
+  try { localStorage.setItem("classTimeTheme", themeName); } catch (error) {}
+}
+
+let savedTheme = "purple";
+try { savedTheme = localStorage.getItem("classTimeTheme") || "purple"; } catch (error) {}
+applyTheme(savedTheme);
+
+document.querySelectorAll(".theme-choice").forEach(button => {
+  button.addEventListener("click", () => applyTheme(button.dataset.theme));
+});
+
+// Infinite Campus image reader: OCR runs in the browser with Tesseract.js.
+let selectedScheduleImage = null;
+let detectedImportRows = [];
+
+$("scheduleImage").addEventListener("change", event => {
+  const file = event.target.files && event.target.files[0];
+  const preview = $("scheduleImagePreview");
+  if (!file) {
+    preview.removeAttribute("src");
+    preview.style.display = "none";
+    $("aiImportStatus").textContent = "";
+    return;
+  }
+  if (!file.type.startsWith("image/")) {
+    $("aiImportStatus").textContent = "Please choose an image file.";
+    event.target.value = "";
+    return;
+  }
+  selectedScheduleImage = file;
+  const reader = new FileReader();
+  reader.onload = () => {
+    preview.src = reader.result;
+    preview.style.display = "block";
+    $("aiImportStatus").textContent = "Image ready. Press Read Schedule.";
+    $("importPreview").hidden = true;
+  };
+  reader.onerror = () => {
+    $("aiImportStatus").textContent = "Couldn't preview that image. Try another one.";
+  };
+  reader.readAsDataURL(file);
+});
+
+function parseCampusScheduleFromWords(words, imageWidth) {
+  // Infinite Campus uses fixed columns and one numbered row per period.
+  // Anchor each row on its period number, then read only text inside that row.
+  const usable = (words || []).filter(w => w.text && w.text.trim() && w.confidence > 15 && w.bbox);
+  if (!usable.length) return [];
+  const W = imageWidth || Math.max(...usable.map(w => w.bbox.x1 || w.bbox.x0));
+  const H = Math.max(...usable.map(w => w.bbox.y1 || w.bbox.y0));
+  const items = usable.map(w => ({
+    text: w.text.trim(), x: w.bbox.x0, x1: w.bbox.x1,
+    y: (w.bbox.y0 + w.bbox.y1) / 2, h: Math.max(1, w.bbox.y1 - w.bbox.y0)
+  }));
+  const periodNumber = value => {
+    let t = value.toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/[|!IL]/g, '1').replace(/[OQD]/g, '0');
+    // Common OCR confusions in the narrow period-number column.
+    if (t === '0T') t = '01';
+    if (t === '0A') t = '04';
+    if (t === '0S') t = '08';
+    if (/^0[1-9]$/.test(t)) return Number(t);
+    if (/^[1-9]$/.test(t)) t = '0' + t;
+    return /^0[1-9]$/.test(t) ? Number(t) : null;
+  };
+  const anchors = items.filter(w => w.x < W * 0.10)
+    .map(w => ({ period: periodNumber(w.text), y: w.y }))
+    .filter(a => a.period !== null)
+    .sort((a,b) => a.y - b.y);
+  const uniqueAnchors = anchors.filter((a,i) => !i || a.period !== anchors[i-1].period || Math.abs(a.y-anchors[i-1].y)>8);
+  if (uniqueAnchors.length < 2) return [];
+
+  const makeLines = list => {
+    const sorted = list.slice().sort((a,b) => a.y-b.y || a.x-b.x);
+    const lines = [];
+    for (const word of sorted) {
+      let line = lines.find(row => Math.abs(row.y-word.y) <= Math.max(8, Math.min(15, word.h*0.65)));
+      if (!line) { line={y:word.y, words:[]}; lines.push(line); }
+      line.words.push(word);
+      line.y = line.words.reduce((sum,v)=>sum+v.y,0)/line.words.length;
+    }
+    return lines.map(line => ({
+      y: line.y,
+      text: line.words.sort((a,b)=>a.x-b.x).map(v=>v.text).join(' ').replace(/\s+/g,' ').trim()
+    })).sort((a,b)=>a.y-b.y);
+  };
+  const parseTime = raw => {
+    let text = raw.toUpperCase().replace(/[‐‑‒–—]/g,'-').replace(/[.]/g,'');
+    // OCR sometimes drops the colon in times such as 7:50 -> 750.
+    text = text.replace(/\b(\d{1,2})([0-5]\d)(\s*[AP]M)\b/g, '$1:$2$3');
+    const m = text.match(/(\d{1,2}:\d{2})\s*(AM|PM)\s*-\s*(\d{1,2}:\d{2})\s*(AM|PM)/i);
+    if (!m) return null;
+    const to24 = (clock, meridiem) => {
+      const [hh,mm] = clock.split(':').map(Number);
+      if (hh<1 || hh>12 || mm>59) return '';
+      let h=hh%12; if (meridiem.toUpperCase()==='PM') h+=12;
+      return `${String(h).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
+    };
+    const start=to24(m[1],m[2]), end=to24(m[3],m[4]);
+    return start && end && end>start ? {start,end} : null;
+  };
+  const results=[];
+  uniqueAnchors.forEach((anchor,index)=>{
+    const prev=index ? (uniqueAnchors[index-1].y+anchor.y)/2 : anchor.y-(uniqueAnchors[index+1].y-anchor.y)/2;
+    const next=index<uniqueAnchors.length-1 ? (anchor.y+uniqueAnchors[index+1].y)/2 : anchor.y+(anchor.y-uniqueAnchors[index-1].y)/2;
+    const band=items.filter(w=>w.y>=prev-2 && w.y<next+2);
+    const leftLines=makeLines(band.filter(w=>w.x>=W*0.09 && w.x<W*0.54));
+    const rightText=makeLines(band.filter(w=>w.x>=W*0.54)).map(l=>l.text).join(' ');
+    const timeLine=leftLines.map(line=>({line,time:parseTime(line.text)})).find(v=>v.time);
+    if (!timeLine) return; // no-time entries such as Case Manager are not timed classes
+    const titleLine=leftLines.filter(line=>line.y<timeLine.line.y && !/\d{1,2}:\d{2}/.test(line.text)).sort((a,b)=>b.y-a.y)[0];
+    if (!titleLine) return;
+    let title=titleLine.text.replace(/^\s*(?:period\s*)?\d{1,2}\s+/i,'').replace(/^[^A-Z0-9]+/i,'').replace(/[.]+$/,'').replace(/\s+/g,' ').trim();
+    if (!title || /^(no class|free period)$/i.test(title)) return;
+    const roomMatch=rightText.match(/ROOM\s*:?\s*([A-Z0-9-]{2,})/i);
+    const room=roomMatch ? roomMatch[1].toUpperCase().replace(/[^A-Z0-9-].*$/,'') : 'Not entered';
+    if (results.some(r=>r.name.toLowerCase()===title.toLowerCase() && r.start===timeLine.time.start)) return;
+    results.push({name:title,room,teacher:'',start:timeLine.time.start,end:timeLine.time.end,days:[1,2,3,4,5],include:true});
+  });
+  return results;
+}
+
+function parseCampusSchedule(rawText) {
+  // Fallback for OCR engines that do not return positioned word data.
+  const lines = rawText.split(/\r?\n/).map(line => line.replace(/\s+/g, ' ').trim()).filter(Boolean);
+  const timePattern = /(\d{1,2}:\d{2}\s*(?:AM|PM)?)\s*[-–—]\s*(\d{1,2}:\d{2}\s*(?:AM|PM)?)/i;
+  const results = [];
+  for (let i = 0; i < lines.length; i++) {
+    const match = lines[i].match(timePattern);
+    if (!match) continue;
+    const candidates = [lines[i].slice(0, match.index), lines[i-1] || '', lines[i-2] || ''];
+    let title = candidates.map(v => v.replace(/^\d{1,2}\s+/, '').trim())
+      .find(v => v && !/^(?:teacher|room|term|q[1-4]|\d{1,2})$/i.test(v) && !/teacher|room|round lake|high school/i.test(v));
+    if (!title || /^(no class|free period)$/i.test(title)) continue;
+    const to24 = value => {
+      const m = value.toUpperCase().replace(/\s+/g,'').match(/^(\d{1,2}):(\d{2})(AM|PM)$/);
+      if (!m) return '';
+      let h = Number(m[1]) % 12; if (m[3] === 'PM') h += 12;
+      return `${String(h).padStart(2,'0')}:${m[2]}`;
+    };
+    const start = to24(match[1]), end = to24(match[2]);
+    if (!start || !end || end <= start) continue;
+    results.push({ name:title, room:'Not entered', teacher:'', start, end, days:[1,2,3,4,5], include:true });
+  }
+  return results;
+}
+
+function renderImportPreview() {
+  const container = $("importRows");
+  container.replaceChildren();
+  detectedImportRows.forEach((row, index) => {
+    const wrap = document.createElement("div");
+    wrap.className = "import-row";
+    const checkLabel = document.createElement("label");
+    const check = document.createElement("input");
+    check.type = "checkbox"; check.checked = row.include;
+    check.addEventListener("change", () => row.include = check.checked);
+    checkLabel.append(check, document.createTextNode(" Import this block"));
+    const fields = document.createElement("div"); fields.className = "import-fields";
+    const makeField = (label, key, type="text") => {
+      const box = document.createElement("label"); box.textContent = label;
+      const input = document.createElement("input"); input.type = type; input.value = row[key];
+      input.addEventListener("input", () => row[key] = input.value);
+      box.append(input); fields.append(box);
+    };
+    makeField("Class", "name"); makeField("Room", "room");
+    makeField("Starts", "start", "time"); makeField("Ends", "end", "time");
+    const daysNote = document.createElement("p"); daysNote.className = "small-note"; daysNote.textContent = "Days: Monday–Friday";
+    wrap.append(checkLabel, fields, daysNote); container.append(wrap);
+  });
+  $("importPreview").hidden = detectedImportRows.length === 0;
+}
+
+$("readScheduleButton").addEventListener("click", async () => {
+  if (!selectedScheduleImage) { $("aiImportStatus").textContent = "Choose a schedule screenshot first."; return; }
+  const button = $("readScheduleButton"); button.disabled = true;
+  $("aiImportStatus").textContent = "Loading the reader and scanning your screenshot… This can take a minute.";
+  try {
+    if (!window.Tesseract) {
+      await new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+        script.onload = resolve; script.onerror = () => reject(new Error("Could not load the text reader. Check your internet connection and try again."));
+        document.head.append(script);
+      });
+    }
+    // Enlarge and increase contrast before OCR; Infinite Campus schedules often
+    // have small text and separate class/time columns.
+    const preparedImage = await new Promise((resolve, reject) => {
+      const image = new Image();
+      const objectUrl = URL.createObjectURL(selectedScheduleImage);
+      image.onload = () => {
+        const canvas = document.createElement("canvas");
+        const scale = Math.min(3, Math.max(2, 1800 / image.width));
+        canvas.width = Math.round(image.width * scale);
+        canvas.height = Math.round(image.height * scale);
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+        const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        for (let i = 0; i < pixels.data.length; i += 4) {
+          const gray = pixels.data[i] * 0.299 + pixels.data[i + 1] * 0.587 + pixels.data[i + 2] * 0.114;
+          const enhanced = Math.max(0, Math.min(255, (gray - 128) * 1.55 + 128));
+          pixels.data[i] = pixels.data[i + 1] = pixels.data[i + 2] = enhanced;
+        }
+        ctx.putImageData(pixels, 0, 0);
+        URL.revokeObjectURL(objectUrl);
+        resolve(canvas);
+      };
+      image.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error("Couldn't prepare that image.")); };
+      image.src = objectUrl;
+    });
+    const progressLogger = message => {
+      if (message.status === "recognizing text") $("aiImportStatus").textContent = `Reading screenshot… ${Math.round((message.progress || 0) * 100)}%`;
+    };
+    // Try both a structured-page pass and a sparse-text pass, then keep the
+    // result that finds the most valid class/time rows.
+    const passA = await Tesseract.recognize(preparedImage, "eng", {
+      logger: progressLogger, tessedit_pageseg_mode: "6"
+    });
+    const passB = await Tesseract.recognize(preparedImage, "eng", {
+      logger: progressLogger, tessedit_pageseg_mode: "11"
+    });
+    const width = preparedImage.width;
+    const rowsA = parseCampusScheduleFromWords(passA.data.words, width);
+    const rowsB = parseCampusScheduleFromWords(passB.data.words, width);
+    // The structured pass is best at matching rooms to rows; sparse-text OCR
+    // is often better at reading small time strings. Combine them without
+    // duplicating a class already found by the positioned pass.
+    const bestRows = rowsA.length >= rowsB.length ? rowsA : rowsB;
+    const textRows = parseCampusSchedule(passB.data.text);
+    detectedImportRows = bestRows.slice();
+    textRows.forEach(row => {
+      const exists = detectedImportRows.some(found =>
+        found.name.toLowerCase() === row.name.toLowerCase() && found.start === row.start
+      );
+      if (!exists) detectedImportRows.push(row);
+    });
+    detectedImportRows.sort((a,b) => a.start.localeCompare(b.start));
+    if (!detectedImportRows.length) {
+      $("aiImportStatus").textContent = "I couldn't confidently find class names and times. Try a clearer, straight-on screenshot.";
+      $("importPreview").hidden = true;
+    } else {
+      renderImportPreview();
+      $("aiImportStatus").textContent = `Found ${detectedImportRows.length} schedule blocks. Check the details before importing.`;
+    }
+  } catch (error) {
+    $("aiImportStatus").textContent = error.message || "Something went wrong while reading the screenshot.";
+  } finally { button.disabled = false; }
+});
+
+$("importScheduleButton").addEventListener("click", () => {
+  const chosen = detectedImportRows.filter(row => row.include);
+  if (!chosen.length) { $("aiImportStatus").textContent = "Select at least one block to import."; return; }
+  let added = 0;
+  chosen.forEach(row => {
+    const name = row.name.trim();
+    if (!name || !/^\d{2}:\d{2}$/.test(row.start) || !/^\d{2}:\d{2}$/.test(row.end) || row.end <= row.start) return;
+    const duplicate = classes.some(c => c.name.toLowerCase() === name.toLowerCase() && c.start === row.start && c.end === row.end);
+    if (duplicate) return;
+    classes.push({ id: Date.now().toString() + Math.random().toString(16).slice(2), days: [1,2,3,4,5], name, room: row.room.trim() || "Not entered", start: row.start, end: row.end, teacher: row.teacher || "" });
+    added++;
+  });
+  saveClasses(); updateApp();
+  $("aiImportStatus").textContent = added ? `Imported ${added} blocks for Monday–Friday. Existing duplicates were skipped.` : "No new blocks were imported. Check the times or whether these classes are already saved.";
+  $("importPreview").hidden = true;
+});
+
+const todayNumber = new Date().getDay();
+$("viewDay").value = todayNumber;
+setSelectedDays([todayNumber]);
+
+updateApp();
+setInterval(updateApp, 1000);
+</script>
+  <script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js")
+      .then(() => console.log("ClassTime is ready!"))
+      .catch(error => console.log("Service worker error:", error));
+  });
+}
+</script>
+</body>
+</html>
